@@ -1,4 +1,8 @@
-use crate::command;
+use crate::{
+    command,
+    dependencies::{self, get_ffmpeg_path},
+    version,
+};
 use alvr_filesystem::{self as afs, Layout};
 use std::{
     env,
@@ -73,6 +77,8 @@ pub fn build_server(
     if let Some(root) = root {
         sh.set_var("ALVR_ROOT_DIR", root);
     }
+
+    sh.set_var("ALVR_FFMPEG_PATH", get_ffmpeg_path());
 
     // build server
     {

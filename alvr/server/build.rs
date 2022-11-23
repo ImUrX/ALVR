@@ -1,19 +1,7 @@
-use std::{env, path::PathBuf};
+use std::{env, path::PathBuf, str::FromStr};
 
 fn get_ffmpeg_path() -> PathBuf {
-    let ffmpeg_path = alvr_filesystem::deps_dir()
-        .join(if cfg!(target_os = "linux") {
-            "linux"
-        } else {
-            "windows"
-        })
-        .join("ffmpeg");
-
-    if cfg!(target_os = "linux") {
-        ffmpeg_path.join("alvr_build")
-    } else {
-        ffmpeg_path
-    }
+    PathBuf::from_str(env!("ALVR_FFMPEG_PATH")).unwrap()
 }
 
 fn main() {
