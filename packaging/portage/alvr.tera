@@ -11,7 +11,7 @@ SRC_URI+=" $(cargo_crate_uris) "
 {% block license %}"MIT"{% endblock license %}
 
 {% block variables %}
-IUSE="+launcher +server +ufw +firewalld +selinux vaapi vulkan x264 x265"
+IUSE="+launcher +server +ufw +firewalld +lto selinux vaapi vulkan x264 x265"
 
 RDEPEND="
 	>=media-video/ffmpeg-4.3[encode,vulkan?,x264?,x265?]
@@ -34,9 +34,9 @@ BDEPEND="${RDEPEND}
 src_configure() {
 	local ECARGO_EXTRA_ARGS="
 		-p vrcompositor-wrapper
-		$(usex server "-p server--features local_ffmpeg" "" )
-        $(usex launcher "-p launcher -p dashboard" "" )
-		$(usex vulkan "-p vulkan-layer" "" )
+		$(usex server "-p alvr_server --features local_ffmpeg" "" )
+        $(usex launcher "-p alvr_launcher -p alvr_dashboard" "" )
+		$(usex vulkan "-p alvr_vulkan_layer" "" )
 		"
 	cargo_src_configure
 }
