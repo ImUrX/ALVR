@@ -1,0 +1,101 @@
+{%- extends "base.tera" -%}
+
+{% block inherit %}desktop xdg {{ super() }}{% endblock inherit %}
+
+{% block description %}"ALVR is an open source remote VR display for the Oculus Go/Quest"{% endblock description %}
+{% block homepage %}"https://github.com/alvr-org/ALVR"{% endblock homepage %}
+{% block src_uri %}"https://github.com/alvr-org/ALVR/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI+=" $(cargo_crate_uris) "
+{% endblock src_uri %}
+
+{% block license %}"MIT"{% endblock license %}
+
+{% block variables %}
+IUSE="+launcher +server +ufw +firewalld +selinux vaapi vulkan x264 x265"
+
+RDEPEND="
+	>=media-video/ffmpeg-4.3[encode,vulkan?,x264?,x265?]
+	vaapi? ( media-video/ffmpeg[libdrm,vaapi] )
+	sys-libs/libunwind
+	www-client/chromium
+"
+
+DEPEND="${RDEPEND}
+	vulkan? ( dev-util/vulkan-headers )
+"
+
+BDEPEND="${RDEPEND}
+	virtual/pkgconfig
+	launcher? ( media-gfx/imagemagick )
+"
+{% endblock variables %}
+
+{% block phases %}
+src_configure() {
+	local ECARGO_EXTRA_ARGS="
+		-p vrcompositor-wrapper
+		$(usex server "-p server--features local_ffmpeg" "" )
+        $(usex launcher "-p launcher -p dashboard" "" )
+		$(usex vulkan "-p vulkan-layer" "" )
+		"
+	cargo_src_configure
+}
+
+src_install() {
+    if use launcher; then
+	    dobin target/release/alvr_launcher
+        dobin target/release/alvr_dashboard
+		domenu packaging/freedesktop/alvr.desktop
+		for size in {16,32,48,64,128,256}; do
+			convert alvr/launcher/res/launcher.ico \
+				-thumbnail ${size} -alpha on -background none -flatten \
+				${PN}-${size}.png || die
+			newicon -s ${size} ${PN}-${size}.png ${PN}.png
+		done
+	fi
+
+	if use server; then
+		into /usr/lib64/alvr/bin/linux64/
+		newlib.so target/release/libalvr_server.so driver_alvr_server.so
+
+		insinto /usr/lib64/alvr/
+		doins alvr/xtask/resources/driver.vrdrivermanifest
+	fi
+
+	if use vulkan; then
+        into /usr/lib64/
+		dolib.so target/release/libalvr_vulkan_layer.so
+		insinto /usr/share/vulkan/explicit_layer.d/
+		doins alvr/vulkan-layer/layer/alvr_x86_64.json
+	fi
+
+	insinto /usr/libexec
+	newins target/release/alvr_vrcompositor_wrapper vrcompositor-wrapper
+
+    insinto /usr/share/${PN}
+	doins packaging/firewall/alvr_fw_config.sh
+
+	insinto /usr/share/${PN}/presets
+	doins alvr/xtask/resources/presets/*
+
+	insinto /usr/share/${PN}
+	doins -r alvr/dashboard
+
+    # we need to make a new package for installing selinux apparently
+    if use selinux; then
+        insinto /usr/share/${PN}/selinux/
+        doins packaging/selinux/*
+    fi
+
+    if use firewalld; then
+        insinto /usr/lib/firewalld/services
+        doins packaging/firewall/alvr-firewalld.xml
+    fi
+
+    if use ufw; then
+        insinto /etc/ufw/applications.d
+        doins packaging/firewall/ufw-alvr
+    fi
+}
+{% endblock phases %}
+
