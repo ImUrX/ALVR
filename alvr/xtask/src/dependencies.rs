@@ -1,6 +1,6 @@
 use crate::command;
 use alvr_filesystem as afs;
-use std::fs;
+use std::{path::PathBuf,fs};
 use xshell::{cmd, Shell};
 
 pub fn choco_install(sh: &Shell, packages: &[&str]) -> Result<(), xshell::Error> {
