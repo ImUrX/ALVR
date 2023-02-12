@@ -101,7 +101,7 @@ fn main() {
 
             let pkg = pkg_config::Config::new().statik(true).to_owned();
 
-            for lib in ["libavutil", "libavfilter", "libavcodec"] {
+            for lib in ["libavutil", "libavfilter", "libavcodec", "libpng", "libsodium", "libbrotlidec"] {
                 pkg.probe(lib).unwrap();
             }
         }

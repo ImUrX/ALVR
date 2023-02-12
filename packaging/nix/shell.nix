@@ -50,6 +50,9 @@ in
       libxkbcommon
       jack2
       bear
+      libpng
+      libsodium
+      brotli
     ];
 
     VK_LAYER_PATH = "${lunarg}/etc/vulkan/explicit_layer.d:${vulkan-validation-layers}";
